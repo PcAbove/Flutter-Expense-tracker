@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 //URL expense table
 final url = Uri.https(
   "expensetrackerapp-a6ad4-default-rtdb.europe-west1.firebasedatabase.app",
-  "expense_list.json",
+  "expense.json",
 );
 
 //URL category table
@@ -70,7 +70,7 @@ Future <void> deleteData(itemId) async{
   //connect to the path of the nod which will be deleted
   final deleteUrl = Uri.https(
   "expensetrackerapp-a6ad4-default-rtdb.europe-west1.firebasedatabase.app",
-  "expense_list/$itemId.json"
+  "expense/$itemId.json"
   );
 
  try {
@@ -94,7 +94,7 @@ Future <void> deleteData(itemId) async{
 Future<void> updateData(String title, double amount, itemId) async {
   final updateUrl = Uri.https(
   "expensetrackerapp-a6ad4-default-rtdb.europe-west1.firebasedatabase.app",
-  "expense_list/$itemId.json");
+  "expense/$itemId.json");
 
   try {
     await http.put(
