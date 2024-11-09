@@ -1,0 +1,36 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    ext {
+        // Define versions for dependencies to keep them consistent across all subprojects.
+        googleServicesVersion = "4.3.15"  // Use the latest version
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // Add the Google services plugin here
+        classpath "com.google.gms:google-services:$googleServicesVersion"
+        // Other classpaths for dependencies
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// Optional: Configure build directory to keep builds organized (if needed)
+rootProject.buildDir = "../build"
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
