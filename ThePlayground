@@ -1,0 +1,265 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart'; // Import Firebase Realtime Database
+import 'package:justendmeplease/FireBaseDatabase.dart';
+import 'package:intl/intl.dart';
+import 'package:month_picker_dialog/month_picker_dialog.dart';
+import 'package:justendmeplease/DataInputPage.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(); // Initialize Firebase
+  FirebaseDatabase.instance.setPersistenceEnabled(true); // Enable offline persistence for Realtime Database
+
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    title: 'Expense Tracker',
+    theme: ThemeData.dark(),
+    home: HomePage(),
+  ));
+}
+
+class HomePage extends StatefulWidget {
+  @override
+  State<HomePage> createState() {
+    return HomePageState();
+  }
+}
+
+class HomePageState extends State<HomePage> {
+  List<Map<String, dynamic>> _expenses = [];
+  DateTime _selectedMonth = DateTime.now(); // Initially set to current month
+  double _totalSpent = 0;
+  double _avgDailySpent = 0;
+  double _predictedMonthlySpent = 0;
+
+  // Function to get data and update the state
+  void fetchExpenses() async {
+    final fetchData = await getData(); // Fetch data from Firebase
+    setState(() {
+      _expenses = fetchData; // Update the list with new data
+    });
+    _updateInsights(_selectedMonth); // Recalculate insights after fetching data
+  }
+
+  // Function to update insights when a new month is selected
+  Future<void> _updateInsights(DateTime selectedMonth) async {
+    final insights = await getInsights(selectedMonth, _expenses); // Pass _expenses to getInsights
+    setState(() {
+      _totalSpent = insights['totalSpent']!;
+      _avgDailySpent = insights['avgDailySpent']!;
+      _predictedMonthlySpent = insights['predictedMonthlySpent']!;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchExpenses(); // Fetch initial expenses data
+    _updateInsights(_selectedMonth); // Initialize insights with current month
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => InputPage(refreshData: fetchExpenses),
+            ),
+          );
+          fetchExpenses(); // Refresh data after returning from input page
+        },
+        child: const Icon(Icons.add),
+        backgroundColor: Colors.blue,
+      ),
+      appBar: AppBar(
+        backgroundColor: Colors.black45,
+        title: const Center(child: Text('Expenses')),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.black45,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_sharp), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.insights_sharp), label: "Insights"),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(10.0), // Adjusted padding
+            child: Card(
+              color: Colors.black45,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(10.0), // Lower padding
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Expense Insights",
+                          style:  TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            final selected = await showMonthPicker(
+                              context: context,
+                              initialDate: _selectedMonth,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now(),
+                            );
+                            if (selected != null) {
+                              setState(() {
+                                _selectedMonth = selected;
+                              });
+                              _updateInsights(selected); // Update insights with new month
+                            }
+                          },
+                          child: Text(
+                            DateFormat('MMMM').format(_selectedMonth),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _buildInsightRow("Total Spent:", "\$${_totalSpent.toStringAsFixed(2)}", Colors.red),
+                    _buildInsightRow("Avg Daily Spending:", "\$${_avgDailySpent.toStringAsFixed(2)}", Colors.greenAccent),
+                    _buildInsightRow("Avg Monthly Spending:", "\$${_predictedMonthlySpent.toStringAsFixed(2)}", Colors.greenAccent),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                  bottom: 15, left: 15, right: 15, top: 0),
+              child: Card(
+                color: Colors.black45,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: ListView.builder(
+                    itemCount: _expenses.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        onLongPress: () {
+                          // Implement long press action if needed
+                        },
+                        leading: const Icon(
+                          Icons.attach_money_outlined,
+                          size: 30,
+                        ),
+                        trailing: IconButton(
+                          onPressed: () async {
+                            var id = _expenses[index]["id"];
+                            await deleteData(id); // Calls deleteData from FireBaseDatabase.dart
+                            fetchExpenses(); // Re-fetch data and update insights
+                          },
+                          icon: Icon(
+                            size: 30,
+                            Icons.delete_forever_rounded,
+                            color: Colors.red[300],
+                          ),
+                        ),
+                        title: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [Text(_expenses[index]['title'])],
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '\$${_expenses[index]['amount']?.toStringAsFixed(2) ?? '0.00'}',
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                            Text(_expenses[index]['date']),
+                            Divider(
+                              thickness: 1,
+                              color: Colors.grey[350],
+                            )
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Widget for displaying insights rows with label and value
+  Widget _buildInsightRow(String label, String value, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 18,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+Future<Map<String, double>> getInsights(DateTime selectedMonth, List<Map<String, dynamic>> _expenses) async {
+  final month = selectedMonth.month;
+  final year = selectedMonth.year;
+  double totalSpent = 0;
+  Set<int> daysWithExpenses = {}; // Using a Set to store unique days
+
+  for (var expense in _expenses) {
+    String dateString = expense['date'];
+    double amount = expense['amount'];
+
+    DateTime date = DateTime.parse(dateString);
+    if (date.month == month && date.year == year) {
+      totalSpent += amount;
+      daysWithExpenses.add(date.day); // Add the day to the set (it will only be added once)
+    }
+  }
+
+  // Number of unique days with expenses
+  int uniqueDays = daysWithExpenses.length;
+
+  // Avoid division by zero in case there are no days with expenses
+  double avgDailySpent = uniqueDays > 0 ? totalSpent / uniqueDays : 0;
+  double predictedMonthlySpent = avgDailySpent * DateTime(selectedMonth.year, selectedMonth.month + 1, 0).day;
+
+  return {
+    'totalSpent': totalSpent,
+    'avgDailySpent': avgDailySpent,
+    'predictedMonthlySpent': predictedMonthlySpent,
+  };
+}
