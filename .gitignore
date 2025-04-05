@@ -1,0 +1,10 @@
+# Ignore all files and directories by default
+*
+
+# Exclude the .gitignore file itself (so it's tracked)
+!.gitignore
+!pubspec.yaml
+
+# Include the lib directory and all its contents
+!lib/
+!lib/**
