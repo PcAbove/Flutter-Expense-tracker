@@ -3,43 +3,52 @@ import 'package:flutter/material.dart';
 
 class CategoryDropdown extends StatefulWidget {
   final ValueChanged<String> onCategoryChanged;
+  final String selectedCategory; // Added property for the current category
 
-  const CategoryDropdown({Key? key, required this.onCategoryChanged}) : super(key: key);
+  const CategoryDropdown({
+    Key? key,
+    required this.onCategoryChanged,
+    required this.selectedCategory,
+  }) : super(key: key);
 
   @override
   _CategoryDropdownState createState() => _CategoryDropdownState();
 }
 
 class _CategoryDropdownState extends State<CategoryDropdown> {
-  String selectedCategory = 'Food';
+  late String _currentCategory;
   List<String> categories = [];
 
   @override
   void initState() {
-    
     super.initState();
+    _currentCategory = widget.selectedCategory;
     _fetchCategories();
   }
 
- Future<void> _fetchCategories() async {
-  final data = await DatabaseHelper.instance.getAllCategories();
-  final mostUsedCategory = await DatabaseHelper.instance.getMostUsedCategory(); // Get the most used
-
-  setState(() {
-    categories = List.from(data);
-    if (!categories.contains('Add New Category')) {
-      categories.add('Add New Category');
+  @override
+  void didUpdateWidget(covariant CategoryDropdown oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update internal state if the parent's selectedCategory changes
+    if (widget.selectedCategory != oldWidget.selectedCategory) {
+      setState(() {
+        _currentCategory = widget.selectedCategory;
+      });
     }
+  }
 
-    // Use the most used category as default, else fallback to 'Food'
-    selectedCategory = categories.contains(mostUsedCategory) ? mostUsedCategory : 'Food';
-  });
-}
-
+  Future<void> _fetchCategories() async {
+    final data = await DatabaseHelper.instance.getAllCategories();
+    setState(() {
+      categories = List.from(data);
+      if (!categories.contains('Add New Category')) {
+        categories.add('Add New Category');
+      }
+    });
+  }
 
   void _showAddCategoryDialog() {
     String newCategory = '';
-
     showDialog(
       context: context,
       builder: (context) {
@@ -47,7 +56,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
           title: const Text('Add New Category'),
           content: TextField(
             onChanged: (value) {
-              newCategory = value.trim(); // Save input value properly
+              newCategory = value.trim();
             },
             decoration: const InputDecoration(
               hintText: 'Enter new category',
@@ -62,11 +71,11 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
               onPressed: () async {
                 if (newCategory.isNotEmpty && !categories.contains(newCategory)) {
                   await DatabaseHelper.instance.insertCategory(newCategory);
-                  await _fetchCategories(); // Refresh the list after insertion
+                  await _fetchCategories();
                   setState(() {
-                    selectedCategory = newCategory;
-                    widget.onCategoryChanged(newCategory);
+                    _currentCategory = newCategory;
                   });
+                  widget.onCategoryChanged(newCategory);
                 }
                 Navigator.of(context).pop();
               },
@@ -81,7 +90,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: selectedCategory,
+      value: _currentCategory,
       decoration: InputDecoration(
         labelText: 'Select Category',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -97,9 +106,9 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
           _showAddCategoryDialog();
         } else {
           setState(() {
-            selectedCategory = value!;
-            widget.onCategoryChanged(selectedCategory);
+            _currentCategory = value!;
           });
+          widget.onCategoryChanged(value!);
         }
       },
     );

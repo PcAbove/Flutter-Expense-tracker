@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:expense_tracker/Data_models/Expense_model.dart';
@@ -180,7 +179,6 @@ class DatabaseHelper {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.rawQuery('SELECT DISTINCT expense_name FROM expenses');
     final x = maps.map((map)=>map['expense_name'] as String).toList();
-    print(x); 
     return x;
   }
 
@@ -249,7 +247,6 @@ Future<String> totalSpentThisMonth() async {
   );
 
   if (result.isNotEmpty && result.first['totalSpent'] != null) {
-    print(result.first);
     return result[0]['totalSpent'].toString(); // Convert to string
   } else {
     return '0'; // Default to 0 if no expenses found
@@ -269,7 +266,6 @@ Future<String> totalSpentThisMonth() async {
     GROUP BY expense_category_name
   ''');
 
-  print("Here is the database output $results");
 
   // Ensure correct type casting and prevent null values
   final Map<String, dynamic> x = {
@@ -278,7 +274,6 @@ Future<String> totalSpentThisMonth() async {
         (element["expense_category_name"] as String): (element["total_amount"] as num).toDouble()
   };
 
-  print("Here is the database shit ${x}");
   return x;
 }
 
@@ -329,7 +324,6 @@ Future<double> getTotalExpenses() async {
 
   final x = results.map((maps)=>maps["total_amount"] as double).toList();
   final double  total= x.fold(0,(sum,value)=>sum+value);
-  print("HERE IS THE SHIT $total");
   
   return total;
 }

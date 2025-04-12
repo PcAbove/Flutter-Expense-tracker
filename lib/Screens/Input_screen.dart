@@ -46,34 +46,33 @@ class InputPageState extends State<InputPage> {
     });
   }
 
-  Future<void> _handleTransactionSelection(String transaction) async {
-    setState(() => _isLoadingDetails = true);
+ Future<void> _handleTransactionSelection(String transaction) async {
+  setState(() => _isLoadingDetails = true);
+  
+  try {
+    final details = await DatabaseHelper.instance.getLastExpenseDetails(transaction);
     
-    try {
-      final details = await DatabaseHelper.instance.getLastExpenseDetails(transaction);
-      
-      if (details != null) {
-        setState(() {
-          transactionName.text = transaction;
-          transactionAmount.text = (details['expense_price'] as num).toString();
-          selectedCategory = details['expense_category_name'] as String;
-        });
-      } else {
-        // No previous record found
-        setState(() {
-          transactionName.text = transaction;
-          transactionAmount.clear();
-          // Keep current category selection
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading details: ${e.toString()}')),
-      );
-    } finally {
-      setState(() => _isLoadingDetails = false);
+    if (details != null) {
+      setState(() {
+        transactionName.text = transaction;
+        transactionAmount.text = (details['expense_price'] as num).toString();
+        selectedCategory = details['expense_category_name'] as String;
+      });
+    } else {
+      setState(() {
+        transactionName.text = transaction;
+        transactionAmount.clear();
+        // Keep current category selection.
+      });
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error loading details: ${e.toString()}')),
+    );
+  } finally {
+    setState(() => _isLoadingDetails = false);
   }
+}
 
 
   Future<void> _submitData() async {
@@ -176,6 +175,7 @@ class InputPageState extends State<InputPage> {
                 children: [
                   Expanded(
                     child: CategoryDropdown(
+                      selectedCategory: selectedCategory, // Pass the parent's current state
                       onCategoryChanged: _updateSelectedCategory,
                     ),
                   ),
@@ -207,8 +207,8 @@ class InputPageState extends State<InputPage> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          DatabaseHelper.instance.getTotalExpenses();
-                         //Navigator.pop(context);
+                          
+                         Navigator.pop(context);
                         },
                         child: const Text("Cancel"),
                       ),
