@@ -3,7 +3,6 @@ import 'package:expense_tracker/Database/DatabaseHelper.dart';
 import 'package:expense_tracker/Data_models/Expense_model.dart';
 import 'package:expense_tracker/Widgets/AutoComplete.dart';
 import 'package:expense_tracker/Widgets/CategoryDropDown.dart';
-import 'package:sqflite/sqflite.dart';
 
 class InputPage extends StatefulWidget {
   
@@ -93,6 +92,7 @@ class InputPageState extends State<InputPage> {
         expensePrice: enteredAmount,
         createDate: selectedDate,
         expenseCategory: selectedCategory,
+        expenseType: selectedType,
       );
 
       await DatabaseHelper.instance.insertExpense(data);
@@ -109,7 +109,7 @@ class InputPageState extends State<InputPage> {
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Error: \${e.toString()}'),
           backgroundColor: Colors.red,
         ),
@@ -207,7 +207,6 @@ class InputPageState extends State<InputPage> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          
                          Navigator.pop(context);
                         },
                         child: const Text("Cancel"),

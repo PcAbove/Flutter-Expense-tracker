@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:expense_tracker/Data_models/Expense_model.dart';
+import 'package:flutter/material.dart';
 
 
 class DatabaseHelper {
@@ -34,7 +35,7 @@ class DatabaseHelper {
             expense_category_name TEXT NOT NULL,
             
         )
-    """);
+    """); //Adding expense_type as INT 0 = expense 1 = income
 
     await db.execute("""
         CREATE TABLE IF NOT EXISTS categories (
@@ -58,7 +59,7 @@ class DatabaseHelper {
   Future<List<Expense>> getAllExpenses() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query("expenses");
-
+    print(maps);
     return maps.map((map) => Expense.fromMap(map)).toList();
   }
 
@@ -91,7 +92,7 @@ class DatabaseHelper {
     "SELECT * FROM expenses WHERE DATE(expense_created_at) = ?",
     [today] // Pass as a List, not a tuple
   );
-
+  print(maps);
   return maps.map((map) => Expense.fromMap(map)).toList();
 }
 
@@ -179,6 +180,7 @@ class DatabaseHelper {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.rawQuery('SELECT DISTINCT expense_name FROM expenses');
     final x = maps.map((map)=>map['expense_name'] as String).toList();
+    
     return x;
   }
 
@@ -318,6 +320,7 @@ Future<double> getTotalExpenses() async {
     SUM(expense_price) AS total_amount
   FROM expenses 
   WHERE strftime('%Y-%m', expense_created_at) = strftime('%Y-%m', 'now')
+  AND expense_type = 0
   GROUP BY expense_category_name
   ORDER BY total_amount DESC
 ''');
@@ -327,6 +330,29 @@ Future<double> getTotalExpenses() async {
   
   return total;
 }
+
+
+Future<double> getTotalIncome() async {
+  final db = await database;
+
+  final results = await db.rawQuery('''
+  SELECT 
+    expense_category_name,
+    SUM(expense_price) AS total_amount
+  FROM expenses 
+  WHERE strftime('%Y-%m', expense_created_at) = strftime('%Y-%m', 'now') 
+  AND expense_type = 1
+  GROUP BY expense_category_name
+  ORDER BY total_amount DESC
+''');
+
+  final x = results.map((maps)=>maps["total_amount"] as double).toList();
+  final double  total= x.fold(0,(sum,value)=>sum+value);
+  
+  return total;
+}
+
+
 
 }
 

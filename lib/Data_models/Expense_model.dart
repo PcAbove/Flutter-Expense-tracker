@@ -9,11 +9,13 @@ class Expense {
   final double expensePrice;
   final DateTime createDate;
   final String expenseCategory;
+  final int expenseType; 
 
   // Default constructor with automatic ID and Date assignment
    Expense({
     String? expenseId, // Now it's optional and handled manually
     required this.expenseName,
+    required this.expenseType, 
     required this.expensePrice,
     required this.expenseCategory,
     DateTime? createDate,
@@ -25,6 +27,7 @@ class Expense {
   factory Expense.fromMap(Map<String, dynamic> map) {
     return Expense(
       expenseId: map["expense_id"] as String,
+      expenseType: map["expense_type"] != null ? map["expense_type"] as int : 0,
       expenseCategory: map["expense_category_name"] as String,
       expenseName: map['expense_name'] as String,
       expensePrice: (map['expense_price'] as num).toDouble(),
@@ -42,6 +45,7 @@ class Expense {
       'expense_price': expensePrice,
       'expense_created_at': DateFormat('yyyy-MM-dd HH:mm:ss').format(createDate), // Format DateTime
       'expense_category_name': expenseCategory,
+      'expense_type': expenseType
     };
   }
 
@@ -53,6 +57,7 @@ class Expense {
       'expense_price': expensePrice,
       'expense_created_at': DateFormat('yyyy-MM-dd HH:mm:ss').format(createDate), // Format DateTime
       'expense_category_name': expenseCategory,
+      'expense_type': expenseType
     };
   }
 }

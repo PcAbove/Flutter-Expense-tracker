@@ -59,9 +59,9 @@ class ExpenseList extends StatelessWidget {
       itemBuilder: (context, index) {
         final expense = expenses[index];
         return Card(
-          margin: const EdgeInsets.all(1.0),
+          //margin: const EdgeInsets.all(1.0),
           child: Card(
-            color: Colors.black12,
+            color: Colors.black54,
             elevation: 5,
             child: ListTile(
               isThreeLine: true,
@@ -70,6 +70,7 @@ class ExpenseList extends StatelessWidget {
                 "${expense.expensePrice.toStringAsFixed(2).replaceAll('.00', '')}\$ | "
                 "${DateFormat('MMMM-dd').format(expense.createDate)}\n"
                 "${expense.expenseCategory}"
+                "${expense.expenseType}"
               ),
               trailing: IconButton(
                 onPressed: () => _showDeleteConfirmation(context, expense.expenseId),

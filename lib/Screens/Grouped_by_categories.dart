@@ -24,8 +24,8 @@ class GroupedCategories extends StatelessWidget {
         final totalAmount = category.value as double;
 
         return Card(
-          //color:const Color.fromARGB(31, 134, 59, 59),
-          elevation: 5,
+          color: Colors.black26,
+          elevation: 2,
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: Colors.green[100],
