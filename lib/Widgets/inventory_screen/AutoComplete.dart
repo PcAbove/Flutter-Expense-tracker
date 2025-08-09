@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:expense_tracker/database/databasehelper.dart';
+import 'package:expense_tracker/database/database_helper.dart';
 
 class AutoCompleteExample extends StatefulWidget {
   final ValueChanged<String> onExpenseSelected;

@@ -1,7 +1,8 @@
+import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:expense_tracker/Data_models/Expense_model.dart';
-import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 
 class DatabaseHelper {
@@ -28,11 +29,12 @@ class DatabaseHelper {
   Future<void> _onCreate(Database db, int version) async {
     await db.execute("""
         CREATE TABLE IF NOT EXISTS expenses (
-            expense_id TEXT NOT NULL,
+            expense_id TEXT NOT NULL UNIQUE,
             expense_name TEXT NOT NULL,
             expense_price REAL NOT NULL,
             expense_created_at TEXT NOT NULL,
             expense_category_name TEXT NOT NULL,
+            expense_type INT DEFAULT 0
             
         )
     """); //Adding expense_type as INT 0 = expense 1 = income
@@ -51,7 +53,7 @@ class DatabaseHelper {
     return await db.insert(
       "expenses",
       expense.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      conflictAlgorithm: ConflictAlgorithm.ignore
     );
   }
 
@@ -59,7 +61,7 @@ class DatabaseHelper {
   Future<List<Expense>> getAllExpenses() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query("expenses");
-    print(maps);
+    print("LOOK HERE FUCKER $maps");
     return maps.map((map) => Expense.fromMap(map)).toList();
   }
 
@@ -264,9 +266,11 @@ Future<String> totalSpentThisMonth() async {
     SELECT expense_category_name, 
     SUM(expense_price) AS total_amount
     FROM expenses 
-    WHERE strftime('%Y-%m', expense_created_at) = strftime('%Y-%m', 'now')
+    WHERE expense_type = 0
     GROUP BY expense_category_name
   ''');
+
+  
 
 
   // Ensure correct type casting and prevent null values
@@ -277,6 +281,31 @@ Future<String> totalSpentThisMonth() async {
   };
 
   return x;
+}
+
+ Future<Map<String, double>> getAllCategoriesTotal2() async {
+  final db = await database;
+  final results = await db.rawQuery('''
+    SELECT expense_category_name, 
+           SUM(expense_price) AS total_amount
+    FROM expenses 
+    WHERE strftime('%Y-%m', expense_created_at) = strftime('%Y-%m', 'now')
+    AND expense_type = 0
+    GROUP BY expense_category_name
+  ''');
+
+  final Map<String, double> categoryMap = {};
+  for (final element in results) {
+    final category = element['expense_category_name'] as String?;
+    final amount = element['total_amount'];
+    
+    if (category != null && amount != null) {
+      categoryMap[category] = (amount is int) 
+          ? amount.toDouble() 
+          : (amount as double);
+    }
+  }
+  return categoryMap;
 }
 
 
@@ -331,6 +360,44 @@ Future<double> getTotalExpenses() async {
   return total;
 }
 
+Future<double> getAllTotalExpenses() async {
+  final db = await database;
+
+  final results = await db.rawQuery('''
+  SELECT 
+    expense_category_name,
+    SUM(expense_price) AS total_amount
+  FROM expenses 
+  WHERE expense_type = 0
+  GROUP BY expense_category_name
+  ORDER BY total_amount DESC
+''');
+
+  final x = results.map((maps)=>maps["total_amount"] as double).toList();
+  final double  total= x.fold(0,(sum,value)=>sum+value);
+  
+  return total;
+}
+
+Future<double> getAllTotalIncome() async {
+  final db = await database;
+
+  final results = await db.rawQuery('''
+  SELECT 
+    expense_category_name,
+    SUM(expense_price) AS total_amount
+  FROM expenses 
+  WHERE expense_type = 1
+  GROUP BY expense_category_name
+  ORDER BY total_amount DESC
+''');
+
+  final x = results.map((maps)=>maps["total_amount"] as double).toList();
+  final double  total= x.fold(0,(sum,value)=>sum+value);
+  
+  return total;
+}
+
 
 Future<double> getTotalIncome() async {
   final db = await database;
@@ -353,8 +420,72 @@ Future<double> getTotalIncome() async {
 }
 
 
+Future<double> getMonthlyAvg() async {
+  final db = await database;
+
+  final results = await db.rawQuery("""
+    WITH days_in_month AS (
+      SELECT 
+        CAST(julianday(date(strftime('%Y-%m-01','now'), '+1 month')) 
+        - julianday(date(strftime('%Y-%m-01','now'))) AS INTEGER) AS total_days)
+    SELECT 
+      IFNULL(SUM(expense_price), 0) * 1.0 / total_days AS avg_daily_spend
+    FROM expenses, days_in_month
+    WHERE strftime("%Y-%m", expense_created_at) = strftime("%Y-%m", "now")
+      AND expense_type = 0;
+  """);
+
+  // Extract result
+  final avg = results.first['avg_daily_spend'] as double;
+  print("HEYYYYY!~!!!! /n$avg");
+  return avg;
+}
+
+
+// Insert data from server to the database :? 
+
+
+Future<double> getDailyAverageSpending() async {
+  final db = await database;
+  final result = await db.rawQuery('''
+    SELECT AVG(daily_total) as avg 
+    FROM (
+      SELECT DATE(expense_created_at) as day, 
+             SUM(expense_price) as daily_total
+      FROM expenses
+      WHERE expense_type = 0
+      GROUP BY day
+    )
+  ''');
+  return result.first['avg'] as double? ?? 0.0;
+}
+
+
+Future<double> getWeeklyTotal() async {
+  final db = await database;
+  final now = DateTime.now();
+  final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+  final endOfWeek = startOfWeek.add(const Duration(days: 6));
+  
+  final result = await db.rawQuery('''
+    SELECT SUM(expense_price) as total
+    FROM expenses
+    WHERE expense_type = 0
+      AND DATE(expense_created_at) BETWEEN ? AND ?
+  ''', [
+    _formatDate(startOfWeek),
+    _formatDate(endOfWeek)
+  ]);
+  
+  return result.first['total'] as double? ?? 0.0;
+}
+
+String _formatDate(DateTime dt) => DateFormat('yyyy-MM-dd').format(dt);
+
+
 
 }
+
 
 
 

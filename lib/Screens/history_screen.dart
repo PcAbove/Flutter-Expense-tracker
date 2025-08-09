@@ -1,5 +1,4 @@
 import 'package:expense_tracker/Database/Get_data.dart';
-import 'package:expense_tracker/Screens/analytics.dart';
 import 'package:expense_tracker/Widgets/home_screen/cash_flow.dart';
 import 'package:expense_tracker/Screens/expenses_list.dart';
 import 'package:expense_tracker/Screens/grouped_by_categories.dart';
@@ -7,32 +6,18 @@ import 'package:flutter/material.dart';
 import 'package:expense_tracker/Data_models/Expense_model.dart';
 import 'package:expense_tracker/Database/database_helper.dart';
 import 'package:expense_tracker/Screens/Input_screen.dart';
-import 'Screens/history_screen.dart';
 
-void main() {
-  
-  runApp(
-    MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
-      home: const HomePage(),
-    ),
-  );
+
+class HistoryScreen extends StatefulWidget {
+  HistoryScreenState createState() => HistoryScreenState(); 
+
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
-  @override
-  HomePageState createState() => HomePageState();
-}
-
-class HomePageState extends State<HomePage> {
+class HistoryScreenState extends State<HistoryScreen>{
   List<Expense> expenses = [];
   Map<String,dynamic> categoriesData = {};
   double totalExpenses = 0;
   double totalIncome = 1;
-  int _selectedIndex = 0;
 
 
   @override
@@ -96,6 +81,7 @@ void showMyDialog(BuildContext context) {
                   );
                 }
               } catch (e) {
+                print("Restore error: $e");
 
                 if (context.mounted) {
                   Navigator.of(context).pop(); // Close any open dialog
@@ -121,9 +107,9 @@ void showMyDialog(BuildContext context) {
     //Expense x = Expense(expenseName: "expenseName", expenseType: 0, expensePrice: 1, expenseCategory: "cv");
     
     final data = await DatabaseHelper.instance.getAllExpenses();
-    final categoryData = await DatabaseHelper.instance.getAllCategoriesTotal2();
-    final total = await DatabaseHelper.instance.getTotalExpenses();
-    final income = await DatabaseHelper.instance.getTotalIncome();
+    final categoryData = await DatabaseHelper.instance.getAllCategoriesTotal();
+    final total = await DatabaseHelper.instance.getAllTotalExpenses();
+    final income = await DatabaseHelper.instance.getAllTotalIncome();
 
     
 
@@ -148,45 +134,26 @@ void showMyDialog(BuildContext context) {
         actions: [
           Row(
             children: [
-              IconButton(onPressed:()async{await exportAndSendExpenses();}, icon: const Icon(Icons.save_alt)),
-              IconButton(onPressed:()async{showMyDialog(context);}, icon: const Icon(Icons.cloud)),
-              IconButton(onPressed:()async{DatabaseHelper.instance.getMonthlyAvg();}, icon: const Icon(Icons.settings)),
+              IconButton(onPressed:()async{await exportAndSendExpenses();}, icon: const Icon(Icons.cloud)),
+              IconButton(onPressed:()async{showMyDialog(context);}, icon: const Icon(Icons.save_alt))
             ],
           )
         ],
       ),
 
       bottomNavigationBar: BottomNavigationBar(
-  currentIndex: _selectedIndex,
-  onTap: (int index) {
-    if (index == 0) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => StatisticsScreen()),
-      );
-    } else if (index == 1) {
-      // You can add another screen for profile later
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile screen coming soon')),
-      );
-    }
-
-    setState(() {
-      _selectedIndex = index;
-    });
-  },
-  items: const [
-    BottomNavigationBarItem(
-      icon: Icon(Icons.monetization_on),
-      label: 'Cashflow',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.person),
-      label: 'Profile',
-    ),
-  ],
-),
-
+    items: const [
+      BottomNavigationBarItem(
+        icon: Icon(Icons.monetization_on),
+        label: 'Cashflow',
+      ),
+     
+      BottomNavigationBarItem(
+        icon: Icon(Icons.person),
+        label: 'Profile',
+      ),
+    ],
+  ),
 
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
@@ -235,6 +202,10 @@ void showMyDialog(BuildContext context) {
               )
             ),
           ),
+          
+
+       
+
          
         ],
       ),

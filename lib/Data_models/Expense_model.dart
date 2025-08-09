@@ -37,6 +37,19 @@ class Expense {
       );
   }
 
+  factory Expense.fromJson(Map<String, dynamic> json) {
+  return Expense(
+    expenseId: json['expense_id'],
+    expenseName: json['expense_name'],
+    expensePrice: double.tryParse(json['expense_price'].toString()) ?? 0.0,
+    createDate: DateTime.tryParse(json['expense_created_at'] ?? ''),
+    expenseType: int.tryParse(json['expense_type'].toString()) ?? 0,
+    expenseCategory: json['expense_category'] ?? json['expense_category_name'] ?? '',
+  );
+}
+
+
+
   // Convert Expense object to a map (for database storage)
   Map<String, dynamic> toMap() {
     return {

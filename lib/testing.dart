@@ -1,4 +1,4 @@
-import 'package:expense_tracker/Database/DatabaseHelper.dart';
+import 'package:expense_tracker/Database/database_helper.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -9,17 +9,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: AutoSuggestionDropdown(),
+      home: _AutoSuggestionDropdown(),
     );
   }
 }
 
-class AutoSuggestionDropdown extends StatefulWidget {
+class _AutoSuggestionDropdown extends StatefulWidget {
   @override
   _AutoSuggestionDropdownState createState() => _AutoSuggestionDropdownState();
 }
 
-class _AutoSuggestionDropdownState extends State<AutoSuggestionDropdown> {
+class _AutoSuggestionDropdownState extends State<_AutoSuggestionDropdown> {
   final TextEditingController _textController = TextEditingController();
   String? selectedCategory;
 
@@ -41,22 +41,22 @@ class _AutoSuggestionDropdownState extends State<AutoSuggestionDropdown> {
     });
   }
 
-  void _saveNewCategory() {
-    final String item = _textController.text.toLowerCase();
-    if (item.isNotEmpty && selectedCategory != null) {
-      setState(() {
-        categoryMap[item] = selectedCategory!;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Category updated for "$item"!')),
-      );
-    }
-  }
+  // void _saveNewCategory() {
+  //   final String item = _textController.text.toLowerCase();
+  //   if (item.isNotEmpty && selectedCategory != null) {
+  //     setState(() {
+  //       categoryMap[item] = selectedCategory!;
+  //     });
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Category updated for "$item"!')),
+  //     );
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Auto-Suggestion with Category')),
+      appBar: AppBar(title: const Text('Auto-Suggestion with Category')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -79,17 +79,17 @@ class _AutoSuggestionDropdownState extends State<AutoSuggestionDropdown> {
                 return TextField(
                   controller: textEditingController,
                   focusNode: focusNode,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Enter an item',
                     border: OutlineInputBorder(),
                   ),
                 );
               },
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             DropdownButton<String>(
               value: selectedCategory,
-              hint: Text('Select Category'),
+              hint: const Text('Select Category'),
               items: ['Fruit', 'Vegetable', 'Meat'].map((String category) {
                 return DropdownMenuItem<String>(
                   value: category,
@@ -102,10 +102,10 @@ class _AutoSuggestionDropdownState extends State<AutoSuggestionDropdown> {
                 });
               },
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: (){DatabaseHelper.instance.getAllCategoriesTotal();},
-              child: Text('Save Category'),
+              child: const Text('Save Category'),
             ),
           ],
         ),

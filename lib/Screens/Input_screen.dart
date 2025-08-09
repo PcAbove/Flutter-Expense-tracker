@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:expense_tracker/Database/DatabaseHelper.dart';
+import 'package:expense_tracker/Database/database_helper.dart';
 import 'package:expense_tracker/Data_models/Expense_model.dart';
-import 'package:expense_tracker/Widgets/AutoComplete.dart';
-import 'package:expense_tracker/Widgets/CategoryDropDown.dart';
+import 'package:expense_tracker/Widgets/inventory_screen/AutoComplete.dart';
+import 'package:expense_tracker/Widgets/inventory_screen/CategoryDropDown.dart';
 
 class InputPage extends StatefulWidget {
   
@@ -19,7 +19,6 @@ class InputPageState extends State<InputPage> {
   DateTime selectedDate = DateTime.now();
   String selectedCategory = 'Food';
   int selectedType = 0; // 0 = Expense, 1 = Income
-  bool _isLoadingDetails = false;
 
 
 
@@ -46,7 +45,7 @@ class InputPageState extends State<InputPage> {
   }
 
  Future<void> _handleTransactionSelection(String transaction) async {
-  setState(() => _isLoadingDetails = true);
+  //setState(() => _isLoadingDetails = true);
   
   try {
     final details = await DatabaseHelper.instance.getLastExpenseDetails(transaction);
@@ -69,7 +68,7 @@ class InputPageState extends State<InputPage> {
       SnackBar(content: Text('Error loading details: ${e.toString()}')),
     );
   } finally {
-    setState(() => _isLoadingDetails = false);
+    //setState(() => _isLoadingDetails = false);
   }
 }
 
